@@ -1,0 +1,5 @@
+slack-bolt
+slack-sdk
+requests
+beautifulsoup4
+openai
