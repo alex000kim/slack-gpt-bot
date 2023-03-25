@@ -18,7 +18,7 @@ openai.api_key = OPENAI_API_KEY
 def command_handler(body, context):
     try:
         channel_id = body['event']['channel']
-        thread_ts = body['event'].get('thread_ts', body['event']['ts'])  # Get thread_ts if present, otherwise use ts
+        thread_ts = body['event'].get('thread_ts', body['event']['ts'])
         bot_user_id = context['bot_user_id']
 
         slack_resp = app.client.chat_postMessage(
