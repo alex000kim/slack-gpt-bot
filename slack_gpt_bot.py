@@ -1,10 +1,9 @@
 import os
-import re
-import requests
-from bs4 import BeautifulSoup
+
 import openai
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
+from utils import augment_user_message
 
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_APP_TOKEN = os.getenv("SLACK_APP_TOKEN")
@@ -14,90 +13,42 @@ N_CHUNKS_TO_CONCAT_BEFORE_UPDATING = 20
 app = App(token=SLACK_BOT_TOKEN)
 openai.api_key = OPENAI_API_KEY
     
-def extract_url_list(text):
-    url_pattern = re.compile(
-        r'<(http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)>'
-    )
-    url_list = url_pattern.findall(text)
-    return url_list if len(url_list)>0 else None
-
-
-def extract_text_from_url(url):
-    try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            for script in soup(['script', 'style']):
-                script.decompose()
-            text = ' '.join(soup.stripped_strings)
-            return text
-        else:
-            print(f"Error: Received a {response.status_code} status code.")
-            return None
-    except Exception as e:
-        print(f"Error: {e}")
-        return None
-    
-def augment_user_message(user_message):
-    url_list = extract_url_list(user_message)
-    if url_list:
-        all_url_content = ''
-        for url in url_list:
-            url_content = extract_text_from_url(url)
-            all_url_content = all_url_content + f'\nContent from {url}:\n"""\n{url_content}\n"""'
-        user_message = user_message + "\n" + all_url_content
-    return user_message
-
 
 @app.event("app_mention")
 def command_handler(body, context):
-    channel_id = body['event']['channel']
-    if body['event'].get('thread_ts'):
-        thread_ts = body['event']['thread_ts'] # if the message is a reply
-    else:
-        thread_ts = body['event']['ts'] # if the message is not a reply
-        
-    slack_resp = app.client.chat_postMessage(
+    try:
+        channel_id = body['event']['channel']
+        thread_ts = body['event'].get('thread_ts', body['event']['ts'])  # Get thread_ts if present, otherwise use ts
+        bot_user_id = context['bot_user_id']
+
+        slack_resp = app.client.chat_postMessage(
             channel=channel_id,
             thread_ts=thread_ts,
             text="Got your request. Please wait."
             )
-    message_ts = slack_resp['message']['ts']
-    user_message = body['event']['text']
-    print(f'user_message: {user_message}')
-    try:
-        bot_user_id = context['bot_user_id']
-        user_message = user_message.replace(f'<@{bot_user_id}>', '').strip()
+        reply_message_ts = slack_resp['message']['ts']
+
+        user_message = body['event']['text'].replace(f'<@{bot_user_id}>', '').strip()
         user_message = augment_user_message(user_message)
         
         conversation_history = app.client.conversations_replies(
             channel=channel_id,
             ts=thread_ts,
-            inclusive=True,
-            latest=message_ts
+            inclusive=True
         )
 
         messages = [{"role": "system", "content": "User has started a conversation."}]
         for message in conversation_history['messages']:
-            if message['user'] == bot_user_id:
-                role = "assistant"
-            else:
-                role = "user"
-            cond = (bot_user_id in message['text']) or (message['user'] == bot_user_id)
-            if cond:
-                if role == "user":
-                    msg = message['text'].replace(f'<@{bot_user_id}>', '').strip()
-                else:
-                    msg = message['text']
-                messages.append({"role": role, "content": msg})
+            role = "assistant" if message['user'] == bot_user_id else "user"
+            messages.append({"role": role, "content": message['text'].replace(f'<@{bot_user_id}>', '').strip()})
             
         openai_response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=messages,
-            stream=True)
+            stream=True
+        )
 
         response_text = ""
-        
         ii = 0
         for chunk in openai_response:
             if chunk.choices[0].delta.get('content'):
@@ -106,16 +57,16 @@ def command_handler(body, context):
                 if ii > N_CHUNKS_TO_CONCAT_BEFORE_UPDATING:
                     app.client.chat_update(
                         channel=channel_id,
-                        ts=message_ts,
+                        ts=reply_message_ts,
                         text=response_text
                     )
                     ii = 0
             elif chunk.choices[0].finish_reason == 'stop':
                 app.client.chat_update(
-                        channel=channel_id,
-                        ts=message_ts,
-                        text=response_text
-                    )
+                    channel=channel_id,
+                    ts=reply_message_ts,
+                    text=response_text
+                )
         
     except Exception as e:
         print(f"Error: {e}")
