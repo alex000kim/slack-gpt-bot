@@ -51,7 +51,7 @@ def augment_user_message(user_message):
 conversations = {}
 
 @app.event("app_mention")
-def command_handler(body, say, context):
+def command_handler(body, context):
     channel_id = body['event']['channel']
     if body['event'].get('thread_ts'):
         thread_ts = body['event']['thread_ts']
@@ -105,7 +105,11 @@ def command_handler(body, say, context):
 
     except Exception as e:
         print(f"Error: {e}")
-        say(f"I can't provide a response: encountered an error:\n```\n{e}\n```", thread_ts=thread_ts)
+        app.client.chat_postMessage(
+            channel=channel_id,
+            thread_ts=thread_ts,
+            text=f"I can't provide a response. Encountered an error:\n```\n{e}\n```"
+            )
 
 if __name__ == "__main__":
     handler = SocketModeHandler(app, SLACK_APP_TOKEN)
