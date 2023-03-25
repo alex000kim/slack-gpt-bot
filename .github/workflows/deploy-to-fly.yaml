@@ -8,12 +8,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
-
+      uses: actions/checkout@v3
     - name: Set up Fly CLI
-      uses: superfly/flyctl-actions/setup-flyctl@v1
-      with:
-        flyctl_version: latest
-        api_token: ${{ secrets.FLY_API_TOKEN }}
+      uses: superfly/flyctl-actions/setup-flyctl@master
     - name: Deploy to Fly.io
+      env: 
+        FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       run: flyctl deploy --remote-only
