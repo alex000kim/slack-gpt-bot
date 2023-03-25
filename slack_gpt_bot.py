@@ -40,7 +40,9 @@ def command_handler(body, context):
         messages = [{"role": "system", "content": "User has started a conversation."}]
         for message in conversation_history['messages']:
             role = "assistant" if message['user'] == bot_user_id else "user"
-            messages.append({"role": role, "content": message['text'].replace(f'<@{bot_user_id}>', '').strip()})
+            cond = (f'<@{bot_user_id}>' in message['text']) or (message['user'] == bot_user_id)
+            if cond:
+                messages.append({"role": role, "content": message['text'].replace(f'<@{bot_user_id}>', '').strip()})
             
         openai_response = openai.ChatCompletion.create(
             model="gpt-4",
