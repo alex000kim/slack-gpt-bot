@@ -48,15 +48,14 @@ def augment_user_message(user_message):
         user_message = user_message + "\n" + all_url_content
     return user_message
 
-conversations = {}
 
 @app.event("app_mention")
 def command_handler(body, context):
     channel_id = body['event']['channel']
     if body['event'].get('thread_ts'):
-        thread_ts = body['event']['thread_ts']
+        thread_ts = body['event']['thread_ts'] # if the message is a reply
     else:
-        thread_ts = body['event']['ts']
+        thread_ts = body['event']['ts'] # if the message is not a reply
         
     slack_resp = app.client.chat_postMessage(
             channel=channel_id,
@@ -68,18 +67,33 @@ def command_handler(body, context):
     print(f'user_message: {user_message}')
     try:
         bot_user_id = context['bot_user_id']
-        conversation_id = f"{channel_id}-{thread_ts}"
         user_message = user_message.replace(f'<@{bot_user_id}>', '').strip()
         user_message = augment_user_message(user_message)
         
-        if conversation_id not in conversations:
-            conversations[conversation_id] = []
-        conversations[conversation_id].append({"role": "system", "content": "User has started a conversation."})
-        conversations[conversation_id].append({"role": "user", "content": user_message})
+        conversation_history = app.client.conversations_replies(
+            channel=channel_id,
+            ts=thread_ts,
+            inclusive=True,
+            latest=message_ts
+        )
 
+        messages = [{"role": "system", "content": "User has started a conversation."}]
+        for message in conversation_history['messages']:
+            if message['user'] == bot_user_id:
+                role = "assistant"
+            else:
+                role = "user"
+            cond = (bot_user_id in message['text']) or (message['user'] == bot_user_id)
+            if cond:
+                if role == "user":
+                    msg = message['text'].replace(f'<@{bot_user_id}>', '').strip()
+                else:
+                    msg = message['text']
+                messages.append({"role": role, "content": msg})
+            
         openai_response = openai.ChatCompletion.create(
             model="gpt-4",
-            messages=conversations[conversation_id],
+            messages=messages,
             stream=True)
 
         response_text = ""
@@ -100,9 +114,9 @@ def command_handler(body, context):
                 app.client.chat_update(
                         channel=channel_id,
                         ts=message_ts,
-                        text=response_text + "\n\n<EOM>"
+                        text=response_text
                     )
-
+        
     except Exception as e:
         print(f"Error: {e}")
         app.client.chat_postMessage(
