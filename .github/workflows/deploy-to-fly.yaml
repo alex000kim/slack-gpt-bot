@@ -1,0 +1,19 @@
+name: Deploy to Fly.io
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Fly CLI
+      uses: superfly/flyctl-actions/setup-flyctl@v1
+      with:
+        flyctl_version: latest
+        api_token: ${{ secrets.FLY_API_TOKEN }}
+    - name: Deploy to Fly.io
+      run: flyctl deploy --remote-only
