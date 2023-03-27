@@ -3,10 +3,6 @@ import re
 import requests
 from bs4 import BeautifulSoup
 
-INIT_PROMPT = '''
-If you don't know the answer or aren't sure or think your answer may be outdated, add a google search query URL like this https://www.google.com/search?q=<search query here>
-'''
-
 WAIT_MESSAGE = "Got your request. Please wait."
 N_CHUNKS_TO_CONCAT_BEFORE_UPDATING = 20
 

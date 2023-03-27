@@ -3,7 +3,7 @@ import os
 import openai
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
-from utils import augment_user_message, INIT_PROMPT, WAIT_MESSAGE, N_CHUNKS_TO_CONCAT_BEFORE_UPDATING
+from utils import augment_user_message, WAIT_MESSAGE, N_CHUNKS_TO_CONCAT_BEFORE_UPDATING
 
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_APP_TOKEN = os.getenv("SLACK_APP_TOKEN")
@@ -32,7 +32,6 @@ def command_handler(body, context):
         # exclude the last message by bot about waiting
         conversation_messages = conversation_history['messages'][:-1]
         messages = [{"role": "system", "content": "User has started a conversation."}]
-        messages = [{"role": "user", "content": INIT_PROMPT}]
         for i, message in enumerate(conversation_messages):
             message_text = message['text']
             role = "assistant" if message['user'] == bot_user_id else "user"
