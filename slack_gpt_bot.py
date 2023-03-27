@@ -18,17 +18,27 @@ def command_handler(body, context):
         channel_id = body['event']['channel']
         thread_ts = body['event'].get('thread_ts', body['event']['ts'])
         bot_user_id = context['bot_user_id']
-        slack_resp = app.client.chat_postMessage(
-            channel=channel_id,
-            thread_ts=thread_ts,
-            text=WAIT_MESSAGE
+        if context.get('retry'):
+            # Edit the existing message
+            app.client.chat_update(
+                channel=channel_id,
+                ts=context['message_ts'],
+                text=WAIT_MESSAGE,
             )
-        reply_message_ts = slack_resp['message']['ts']
+            reply_message_ts = context['message_ts']
+        else:
+            # Post a new message
+            slack_resp = app.client.chat_postMessage(
+                channel=channel_id,
+                thread_ts=thread_ts,
+                text=WAIT_MESSAGE
+            )
+            reply_message_ts = slack_resp['message']['ts']
         conversation_history = app.client.conversations_replies(
             channel=channel_id,
             ts=thread_ts,
             inclusive=True
-        )
+            )
         # exclude the last message by bot about waiting
         conversation_messages = conversation_history['messages'][:-1]
         messages = [{"role": "system", "content": "User has started a conversation."}]
@@ -42,12 +52,13 @@ def command_handler(body, context):
             if cond:
                 message_text = message_text.replace(f'<@{bot_user_id}>', '').strip()
                 messages.append({"role": role, "content": message_text})
-            
+        print(messages)
         openai_response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=messages,
             stream=True
         )
+        
 
         response_text = ""
         ii = 0
@@ -66,7 +77,29 @@ def command_handler(body, context):
                 app.client.chat_update(
                     channel=channel_id,
                     ts=reply_message_ts,
-                    text=response_text
+                    text=response_text,
+                    blocks=[
+                                {
+                                    "type": "section",
+                                    "text": {
+                                        "type": "mrkdwn",
+                                        "text": response_text
+                                    }
+                                },
+                                {
+                                    "type": "actions",
+                                    "elements": [
+                                        {
+                                            "type": "button",
+                                            "text": {
+                                                "type": "plain_text",
+                                                "text": "Retry"
+                                            },
+                                            "action_id": "retry_response"
+                                        }
+                                    ]
+                                }
+                            ]
                 )
     except Exception as e:
         print(f"Error: {e}")
@@ -75,6 +108,18 @@ def command_handler(body, context):
             thread_ts=thread_ts,
             text=f"I can't provide a response. Encountered an error:\n```\n{e}\n```"
             )
+
+@app.action("retry_response")
+def retry_response_handler(ack, respond, body, context):
+    ack()
+    channel_id = body['channel']['id']
+    message_ts = body['message']['ts']
+    thread_ts = body['message'].get('thread_ts', message_ts)
+    new_body = {'event': {'channel': channel_id, 'ts': thread_ts, 'thread_ts': thread_ts}}
+    new_context = context.copy()
+    new_context['retry'] = True
+    new_context['message_ts'] = message_ts
+    command_handler(new_body, new_context)
 
 if __name__ == "__main__":
     handler = SocketModeHandler(app, SLACK_APP_TOKEN)
