@@ -3,4 +3,5 @@ slack-sdk
 requests
 beautifulsoup4
 openai
-psycopg2-binary
+tiktoken
+trafilatura
