@@ -18,7 +18,7 @@ You will answer the question as truthfully as possible.
 If you're unsure of the answer, say Sorry, I don't know.
 '''
 WAIT_MESSAGE = "Got your request. Please wait."
-N_CHUNKS_TO_CONCAT_BEFORE_UPDATING = 50
+N_CHUNKS_TO_CONCAT_BEFORE_UPDATING = 20
 MAX_TOKENS = 8192
 
 
@@ -72,6 +72,33 @@ def num_tokens_from_messages(messages, model="gpt-4"):
     num_tokens += 3  # every reply is primed with <|start|>assistant<|message|>
     return num_tokens
 
+def process_conversation_history(conversation_history, bot_user_id):
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    for message in conversation_history['messages'][:-1]:
+        role = "assistant" if message['user'] == bot_user_id else "user"
+        message_text = process_message(message, bot_user_id)
+        if message_text:
+            messages.append({"role": role, "content": message_text})
+    return messages
+
+
+def process_message(message, bot_user_id):
+    message_text = message['text']
+    role = "assistant" if message['user'] == bot_user_id else "user"
+    if role == "user":
+        url_list = extract_url_list(message_text)
+        if url_list:
+            message_text = augment_user_message(message_text, url_list)
+    message_text = clean_message_text(message_text, role, bot_user_id)
+    return message_text
+
+
+def clean_message_text(message_text, role, bot_user_id):
+    if (f'<@{bot_user_id}>' in message_text) or (role == "assistant"):
+        message_text = message_text.replace(f'<@{bot_user_id}>', '').strip()
+        return message_text
+    return None
+
 
 def update_chat(app, channel_id, reply_message_ts, response_text):
     app.client.chat_update(
@@ -79,3 +106,4 @@ def update_chat(app, channel_id, reply_message_ts, response_text):
         ts=reply_message_ts,
         text=response_text
     )
+

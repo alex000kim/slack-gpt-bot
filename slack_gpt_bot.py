@@ -1,17 +1,24 @@
-import os
-
 import openai
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 from utils import (N_CHUNKS_TO_CONCAT_BEFORE_UPDATING, OPENAI_API_KEY,
-                   SLACK_APP_TOKEN, SLACK_BOT_TOKEN, SYSTEM_PROMPT,
-                   WAIT_MESSAGE, augment_user_message, extract_url_list,
-                   num_tokens_from_messages, update_chat)
+                   SLACK_APP_TOKEN, SLACK_BOT_TOKEN, WAIT_MESSAGE,
+                   num_tokens_from_messages, process_conversation_history,
+                   update_chat)
 
 app = App(token=SLACK_BOT_TOKEN)
 openai.api_key = OPENAI_API_KEY
-    
+
+
+def get_conversation_history(channel_id, thread_ts):
+    return app.client.conversations_replies(
+        channel=channel_id,
+        ts=thread_ts,
+        inclusive=True
+    )
+
+
 @app.event("app_mention")
 def command_handler(body, context):
     try:
@@ -24,39 +31,17 @@ def command_handler(body, context):
             text=WAIT_MESSAGE
         )
         reply_message_ts = slack_resp['message']['ts']
-        conversation_history = app.client.conversations_replies(
-            channel=channel_id,
-            ts=thread_ts,
-            inclusive=True
-            )
-        # exclude the last message by bot about waiting
-        conversation_messages = conversation_history['messages'][:-1]
-        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-        for message in conversation_messages:
-            message_text = message['text']
-            role = "assistant" if message['user'] == bot_user_id else "user"
-            if role == "user":
-                url_list = extract_url_list(message_text)
-                if url_list:
-                    app.client.chat_update(
-                        channel=channel_id,
-                        ts=reply_message_ts,
-                        text='Detected URLs. Please wait while I process the content...'
-                    )
-                    message_text = augment_user_message(message_text, url_list)
-            cond = (f'<@{bot_user_id}>' in message_text) or (message['user'] == bot_user_id)
-            if cond:
-                message_text = message_text.replace(f'<@{bot_user_id}>', '').strip()
-                messages.append({"role": role, "content": message_text})
+        conversation_history = get_conversation_history(channel_id, thread_ts)
+        messages = process_conversation_history(conversation_history, bot_user_id)
         num_tokens = num_tokens_from_messages(messages)
         print(f"Number of tokens: {num_tokens}")
-        
+
         openai_response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=messages,
             stream=True
         )
-        
+
         response_text = ""
         ii = 0
         for chunk in openai_response:
