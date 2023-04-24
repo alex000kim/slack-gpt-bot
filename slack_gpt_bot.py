@@ -45,7 +45,7 @@ def command_handler(body, context):
         print(f"Number of tokens: {num_tokens}")
 
         openai_response = openai.ChatCompletion.create(
-            model="gpt-4",
+            model="gpt-3.5-turbo",
             messages=messages,
             stream=True
         )
