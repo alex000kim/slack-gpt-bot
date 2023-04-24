@@ -5,4 +5,4 @@ beautifulsoup4
 openai
 tiktoken
 trafilatura
-dotenv
+python-dotenv
