@@ -65,9 +65,7 @@ def command_handler(body, context):
             messages=messages,
             stream=True
         )
-
-        # Log generated response
-        outgoing_logger.info(f'response: {openai_response}')
+        
 
         response_text = ""
         ii = 0
@@ -76,9 +74,11 @@ def command_handler(body, context):
                 ii = ii + 1
                 response_text += chunk.choices[0].delta.content
                 if ii > N_CHUNKS_TO_CONCAT_BEFORE_UPDATING:
+                    outgoing_logger.info(f'response: {response_text}')
                     update_chat(app, channel_id, reply_message_ts, response_text)
                     ii = 0
             elif chunk.choices[0].finish_reason == 'stop':
+                outgoing_logger.info(f'response: {response_text}')
                 update_chat(app, channel_id, reply_message_ts, response_text)
     except Exception as e:
         print(f"Error: {e}")
