@@ -28,7 +28,7 @@ from utils import (N_CHUNKS_TO_CONCAT_BEFORE_UPDATING, OPENAI_API_KEY,
                    num_tokens_from_messages, process_conversation_history,
                    update_chat)
 
-app = App(token=SLACK_BOT_TOKEN)
+app = App(token=SLACK_BOT_TOKEN, logger=incoming_logger)
 openai.api_key = OPENAI_API_KEY
 
 
@@ -41,7 +41,7 @@ def get_conversation_history(channel_id, thread_ts):
 
 
 @app.event("app_mention")
-def command_handler(body, context, logger=incoming_logger):
+def command_handler(body, context):
     try:
         channel_id = body['event']['channel']
         thread_ts = body['event'].get('thread_ts', body['event']['ts'])
@@ -58,7 +58,7 @@ def command_handler(body, context, logger=incoming_logger):
         num_tokens = num_tokens_from_messages(messages)
         # print(f"Number of tokens: {num_tokens}")
         logger.info(f'Number of tokens: {num_tokens}')
-        logger.info(f'{channel_id}: {messages}')
+        logger.info(f'Channel ID:{channel_id}:, User ID: {bot_user_id}, message: {messages}')
 
         openai_response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -66,7 +66,7 @@ def command_handler(body, context, logger=incoming_logger):
             stream=True
         )
 
-            # Log generated response
+        # Log generated response
         outgoing_logger.info(f'response: {openai_response}')
 
         response_text = ""
