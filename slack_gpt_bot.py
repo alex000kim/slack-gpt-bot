@@ -66,9 +66,9 @@ def command_handler(body, context):
             stream=True
         )
         
-
         response_text = ""
         ii = 0
+        outgoing_logger.info(f'Channel ID:{channel_id}:, User ID: {bot_user_id}, message: {messages}')
         for chunk in openai_response:
             if chunk.choices[0].delta.get('content'):
                 ii = ii + 1
