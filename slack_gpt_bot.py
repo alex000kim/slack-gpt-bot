@@ -1,8 +1,21 @@
 import openai
 import os
+import logging
 from dotenv import load_dotenv
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger('slack-gpt-bot')
+
+incoming_logger = logging.getLogger('incoming')
+incoming_handler = logging.FileHandler('incoming.log')
+incoming_logger.addHandler(incoming_handler)
+
+outgoing_logger = logging.getLogger('outgoing')
+outgoing_handler = logging.FileHandler('outgoing.log')
+outgoing_logger.addHandler(outgoing_handler)
 
 load_dotenv()
 
@@ -28,7 +41,7 @@ def get_conversation_history(channel_id, thread_ts):
 
 
 @app.event("app_mention")
-def command_handler(body, context):
+def command_handler(body, context, logger=incoming_logger):
     try:
         channel_id = body['event']['channel']
         thread_ts = body['event'].get('thread_ts', body['event']['ts'])
@@ -38,17 +51,23 @@ def command_handler(body, context):
             thread_ts=thread_ts,
             text=WAIT_MESSAGE
         )
+
         reply_message_ts = slack_resp['message']['ts']
         conversation_history = get_conversation_history(channel_id, thread_ts)
         messages = process_conversation_history(conversation_history, bot_user_id)
         num_tokens = num_tokens_from_messages(messages)
-        print(f"Number of tokens: {num_tokens}")
+        # print(f"Number of tokens: {num_tokens}")
+        logger.info(f'Number of tokens: {num_tokens}')
+        logger.info(f'{channel_id}: {messages}')
 
         openai_response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=messages,
             stream=True
         )
+
+            # Log generated response
+        outgoing_logger.info(f'response: {openai_response}')
 
         response_text = ""
         ii = 0
