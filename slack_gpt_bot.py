@@ -61,7 +61,7 @@ def command_handler(body, context):
         logger.info(f'Channel ID:{channel_id}:, User ID: {bot_user_id}, message: {messages}')
 
         openai_response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4-32k",
             messages=messages,
             stream=True
         )
