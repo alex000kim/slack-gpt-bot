@@ -30,11 +30,22 @@ def extract_url_list(text):
     return url_list if len(url_list)>0 else None
 
 
+def is_html(content):
+    content_start = content.lower().strip()[:15]
+    return content_start.startswith("<!doctype html>") or content_start.startswith("<html>")
+
+
 def augment_user_message(user_message, url_list):
     all_url_content = ''
     for url in url_list:
         downloaded = fetch_url(url)
-        url_content = extract(downloaded, config=newconfig)
+        if downloaded is None:
+            return user_message
+        # Check if the content is HTML, then use extract() to clean and extract the main text content
+        if is_html(downloaded):
+            url_content = extract(downloaded, config=newconfig)
+        else:
+            url_content = downloaded
         user_message = user_message.replace(f'<{url}>', '')
         all_url_content = all_url_content + f' Contents of {url} : \n """ {url_content} """'
     user_message = user_message + "\n" + all_url_content
