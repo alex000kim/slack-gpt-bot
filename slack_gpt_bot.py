@@ -63,7 +63,8 @@ def command_handler(body, context):
         openai_response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=messages,
-            stream=True
+            stream=True,
+            max_tokens=2048
         )
         
         response_text = ""
