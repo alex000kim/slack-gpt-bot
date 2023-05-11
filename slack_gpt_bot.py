@@ -55,7 +55,8 @@ def command_handler(body, context):
             user=user_id
         )
         logger.info(f'user info: {result}')
-
+        username = result['user']['name']
+        realname = result['user']['real_name']
 
         slack_resp = app.client.chat_postMessage(
             channel=channel_id,
@@ -69,7 +70,7 @@ def command_handler(body, context):
         num_tokens = num_tokens_from_messages(messages)
         print(f"Number of tokens: {num_tokens}")
         logger.info(f'Number of tokens: {num_tokens}')
-        logger.info(f'Channel ID:{channel_id}:, User ID: {bot_user_id}, message: {messages}')
+        logger.info(f'Channel ID:{channel_id}:, User: {username}, message: {messages}')
 
         openai_response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
