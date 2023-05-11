@@ -52,6 +52,8 @@ def get_user_information(user_id):
                 result['user']['profile']['first_name'],
                 result['user']['profile']['last_name'])
 
+def build_personalized_wait_message(first_name):
+    return "Hi " + first_name +"!" + WAIT_MESSAGE
 
 @app.event("app_mention")
 def command_handler(body, context):
@@ -70,7 +72,7 @@ def command_handler(body, context):
         slack_resp = app.client.chat_postMessage(
             channel=channel_id,
             thread_ts=thread_ts,
-            text=WAIT_MESSAGE
+            text=build_personalized_wait_message(user.first_name)
         )
 
         reply_message_ts = slack_resp['message']['ts']
