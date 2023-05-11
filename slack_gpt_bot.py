@@ -4,6 +4,7 @@ import logging
 from dotenv import load_dotenv
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
+from collections import namedtuple
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -40,6 +41,18 @@ def get_conversation_history(channel_id, thread_ts):
     )
 
 
+User = namedtuple('User', 'username', 'display_name', 'first_name', 'last_name')
+def get_user_information(user_id):
+        result = app.client.users_info(
+            user=user_id
+        )
+
+        return User(result['user']['name'], 
+                result['user']['profile']['display_name'],
+                result['user']['profile']['first_name'],
+                result['user']['profile']['last_name'])
+
+
 @app.event("app_mention")
 def command_handler(body, context):
     try:
@@ -51,12 +64,8 @@ def command_handler(body, context):
         bot_user_id = context['bot_user_id']
         user_id = context['user_id']
 
-        result = app.client.users_info(
-            user=user_id
-        )
-        logger.info(f'user info: {result}')
-        username = result['user']['name']
-        realname = result['user']['real_name']
+        user = get_user_information(user_id)
+        print(user)
 
         slack_resp = app.client.chat_postMessage(
             channel=channel_id,
@@ -70,7 +79,7 @@ def command_handler(body, context):
         num_tokens = num_tokens_from_messages(messages)
         print(f"Number of tokens: {num_tokens}")
         logger.info(f'Number of tokens: {num_tokens}')
-        logger.info(f'Channel ID:{channel_id}:, User: {username}, message: {messages}')
+        logger.info(f'Channel ID:{channel_id}:, User: {user.username}, message: {messages}')
 
         openai_response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
