@@ -6,7 +6,7 @@ from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('slack-gpt-bot')
 
 incoming_logger = logging.getLogger('incoming')
@@ -43,9 +43,20 @@ def get_conversation_history(channel_id, thread_ts):
 @app.event("app_mention")
 def command_handler(body, context):
     try:
+        logger.debug(f'body: {body}')
+        logger.debug(f'context: {context}')
+
         channel_id = body['event']['channel']
         thread_ts = body['event'].get('thread_ts', body['event']['ts'])
         bot_user_id = context['bot_user_id']
+        user_id = context['user_id']
+
+        result = app.client.users_info(
+            user=user_id
+        )
+        logger.info(f'user info: {result}')
+
+
         slack_resp = app.client.chat_postMessage(
             channel=channel_id,
             thread_ts=thread_ts,
