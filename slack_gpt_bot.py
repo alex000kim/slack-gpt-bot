@@ -41,7 +41,7 @@ def get_conversation_history(channel_id, thread_ts):
     )
 
 
-User = namedtuple('User', 'username', 'display_name', 'first_name', 'last_name')
+User = namedtuple('User', ('username', 'display_name', 'first_name', 'last_name'))
 def get_user_information(user_id):
         result = app.client.users_info(
             user=user_id
