@@ -9,13 +9,13 @@ from slack_bolt.adapter.socket_mode import SocketModeHandler
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('slack-gpt-bot')
 
-incoming_logger = logging.getLogger('incoming')
-incoming_handler = logging.FileHandler('incoming.log')
-incoming_logger.addHandler(incoming_handler)
+# incoming_logger = logging.getLogger('incoming')
+# incoming_handler = logging.FileHandler('incoming.log')
+# incoming_logger.addHandler(incoming_handler)
 
-outgoing_logger = logging.getLogger('outgoing')
-outgoing_handler = logging.FileHandler('outgoing.log')
-outgoing_logger.addHandler(outgoing_handler)
+# outgoing_logger = logging.getLogger('outgoing')
+# outgoing_handler = logging.FileHandler('outgoing.log')
+# outgoing_logger.addHandler(outgoing_handler)
 
 load_dotenv()
 
@@ -69,17 +69,17 @@ def command_handler(body, context):
         
         response_text = ""
         ii = 0
-        outgoing_logger.info(f'Channel ID:{channel_id}:, User ID: {bot_user_id}, message: {messages}')
+        #outgoing_logger.info(f'Channel ID:{channel_id}:, User ID: {bot_user_id}, message: {messages}')
         for chunk in openai_response:
             if chunk.choices[0].delta.get('content'):
                 ii = ii + 1
                 response_text += chunk.choices[0].delta.content
                 if ii > N_CHUNKS_TO_CONCAT_BEFORE_UPDATING:
-                    outgoing_logger.info(f'response: {response_text}')
+                    #outgoing_logger.info(f'response: {response_text}')
                     update_chat(app, channel_id, reply_message_ts, response_text)
                     ii = 0
             elif chunk.choices[0].finish_reason == 'stop':
-                outgoing_logger.info(f'response: {response_text}')
+                #outgoing_logger.info(f'response: {response_text}')
                 update_chat(app, channel_id, reply_message_ts, response_text)
     except Exception as e:
         print(f"Error: {e}")
