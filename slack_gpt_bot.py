@@ -103,7 +103,7 @@ def command_handler(body, context):
             channel_id=channel_id, 
             user=user.username, 
             email=user.email, 
-            request=messages[1]
+            request=messages[1:]
         )
         json_std_logger.info('MessageInfo')
 

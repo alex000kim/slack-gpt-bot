@@ -8,7 +8,8 @@ Additional logging components have been added for compliance purposes to track a
 - Scrape webpage content from URLs
 - Integrate with OpenAI's GPT-4 to answer questions
 - Maintain conversation context in a threaded format
-- Socket mode integration with Slack
+- Socket mode integration with SlackA
+- Logs all inputs, outputs, user names, and emails to structured json payload
 ## Dependencies
 - Python 3.6 or later
 - beautifulsoup4
