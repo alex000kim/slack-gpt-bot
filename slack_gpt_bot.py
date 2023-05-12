@@ -1,24 +1,28 @@
 import openai
 import os
 import logging
-import json_log_formatter
+from json_logger_stdout import JSONLoggerStdout
 from dotenv import load_dotenv
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from collections import namedtuple
 
 # Set up logging
-formatter = json_log_formatter.JSONFormatter()
-incoming_handler = logging.FileHandler('incoming.log')
-incoming_handler.setFormatter(formatter)
-incoming_logger = logging.getLogger('incoming-slack')
-incoming_logger.addHandler(incoming_handler)
-incoming_logger.setLevel(logging.INFO)
+# formatter = json_log_formatter.JSONFormatter()
+# incoming_handler = logging.FileHandler('incoming.log')
+# incoming_handler.setFormatter(formatter)
+# incoming_logger = logging.getLogger('incoming-slack')
+# incoming_logger.addHandler(incoming_handler)
+# incoming_logger.setLevel(logging.INFO)
 
-outgoing_logger = logging.getLogger('outgoing')
-outgoing_handler = logging.FileHandler('outgoing.log')
-outgoing_handler.setFormatter(formatter)
-outgoing_logger.addHandler(outgoing_handler)
+# outgoing_logger = logging.getLogger('outgoing')
+# outgoing_handler = logging.FileHandler('outgoing.log')
+# outgoing_handler.setFormatter(formatter)
+# outgoing_logger.addHandler(outgoing_handler)
+
+logger = JSONLoggerStdout(
+    service="slack-gpt-bot"
+)
 
 load_dotenv()
 
@@ -64,7 +68,7 @@ def build_personalized_wait_message(first_name):
 @app.event("app_mention")
 def command_handler(body, context):
     try:
-        incoming_logger.debug('Arguments', extra={'body': body, 'context': context})
+        logger.debug({'message': 'arguments','body': body, 'context': context})
 
         channel_id = body['event']['channel']
         thread_ts = body['event'].get('thread_ts', body['event']['ts'])
@@ -84,12 +88,10 @@ def command_handler(body, context):
         messages = process_conversation_history(conversation_history, bot_user_id)
         num_tokens = num_tokens_from_messages(messages)
         
-        incoming_logger.info('TokensUsed', extra={'tokenCnt': num_tokens})
+        logger.info({'message': 'TokensUsed', 'tokenCnt': num_tokens})
 
-        incoming_logger.info('MessageInfo', extra= {'channel_id': channel_id, 
-                                           'user': user.username, 
-                                           'email': user.email})
-        incoming_logger.info(messages)
+        logger.info({'message': 'MessageInfo', 'channel_id': channel_id, 'user': user.username, 'email': user.email})
+        logger.info(messages)
 
         openai_response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",

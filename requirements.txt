@@ -6,4 +6,5 @@ openai
 tiktoken
 trafilatura
 python-dotenv
-json_log_formatter
+# json_log_formatter
+json-logger-stdout
