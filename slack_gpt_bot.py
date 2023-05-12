@@ -103,7 +103,7 @@ def command_handler(body, context):
             channel_id=channel_id, 
             user=user.username, 
             email=user.email, 
-            request=messages
+            request=messages[1]
         )
         json_std_logger.info('MessageInfo')
 
@@ -132,7 +132,7 @@ def command_handler(body, context):
             channel_id=channel_id, 
             user=user.username, 
             email=user.email, 
-            response=response_text[1]
+            response=response_text
         )
  
         json_std_logger.info('ResponseInfo')
