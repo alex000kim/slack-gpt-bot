@@ -35,7 +35,7 @@ from utils import (N_CHUNKS_TO_CONCAT_BEFORE_UPDATING, OPENAI_API_KEY,
                    num_tokens_from_messages, process_conversation_history,
                    update_chat)
 
-app = App(token=SLACK_BOT_TOKEN, logger=incoming_logger)
+app = App(token=SLACK_BOT_TOKEN, logger=logger)
 openai.api_key = OPENAI_API_KEY
 
 
