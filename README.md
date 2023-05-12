@@ -1,3 +1,13 @@
+# CipherHealth Internal Slack GPT Bot
+This repo was forked from here https://github.com/alex000kim/slack-gpt-bot original Readme available below. 
+
+## Changes specific to Cipher
+Additional logging components have been added for compliance purposes to track all user info across inputs & outputs.
+
+## Deploying the bot
+The bot leverages sockets which do not play nice with CloudRun, as such it is to be deployed as a container to GCE directly. 
+
+
 # Slack GPT Bot
 This repository contains a Python-based Slack GPT Bot that uses OpenAI's GPT model to answer users' questions. Additionally, the bot can extract content from URLs provided in the user's message and take into account their content in its response.
 
