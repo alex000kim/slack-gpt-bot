@@ -106,7 +106,7 @@ def command_handler(body, context):
             channel_id=channel_id, 
             user=user.username, 
             email=user.email,
-            request=messages[1:],
+            request=messages[1:],   #field 0 is something that slack adds that we don't need
             response=response_text
         )
         json_std_logger.info('RequestResponse')
