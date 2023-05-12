@@ -42,6 +42,9 @@ def get_conversation_history(channel_id, thread_ts):
 
 
 User = namedtuple('User', ('username', 'display_name', 'first_name', 'last_name'))
+'''
+This uses https://api.slack.com/methods/users.profile.get
+'''
 def get_user_information(user_id):
         result = app.client.users_info(
             user=user_id
@@ -91,7 +94,7 @@ def command_handler(body, context):
         
         response_text = ""
         ii = 0
-        outgoing_logger.info(f'Channel ID:{channel_id}:, User ID: {bot_user_id}, message: {messages}')
+        outgoing_logger.info(f'Channel ID:{channel_id}:, User: {user.username}, message: {messages}')
         for chunk in openai_response:
             if chunk.choices[0].delta.get('content'):
                 ii = ii + 1
