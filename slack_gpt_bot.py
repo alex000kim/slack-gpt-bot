@@ -65,7 +65,7 @@ def command_handler(body, context):
             slack_resp = app.client.chat_postMessage( 
                 channel=channel_id,
                 thread_ts=thread_ts,
-                text="Our apologies, however the Beta ChatGPT bot is not allowed outside of Beta channel"
+                text="Our apologies, however the Beta ChatGPT bot is not allowed outside of the beta-slack-chatgpt-bot channel"
             )
             return
 
