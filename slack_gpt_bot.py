@@ -9,13 +9,11 @@ from collections import namedtuple
 
 # Set up logging
 formatter = json_log_formatter.JSONFormatter()
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('slack-gpt-bot')
-
-incoming_logger = logging.getLogger('incoming')
 incoming_handler = logging.FileHandler('incoming.log')
 incoming_handler.setFormatter(formatter)
+incoming_logger = logging.getLogger('incoming-slack')
 incoming_logger.addHandler(incoming_handler)
+incoming_logger.setLevel(logging.INFO)
 
 outgoing_logger = logging.getLogger('outgoing')
 outgoing_handler = logging.FileHandler('outgoing.log')
@@ -66,7 +64,7 @@ def build_personalized_wait_message(first_name):
 @app.event("app_mention")
 def command_handler(body, context):
     try:
-        logger.debug('Arguments', extra={'body': body, 'context': context})
+        incoming_logger.debug('Arguments', extra={'body': body, 'context': context})
 
         channel_id = body['event']['channel']
         thread_ts = body['event'].get('thread_ts', body['event']['ts'])
@@ -86,12 +84,12 @@ def command_handler(body, context):
         messages = process_conversation_history(conversation_history, bot_user_id)
         num_tokens = num_tokens_from_messages(messages)
         
-        logger.info('TokensUsed', extra={'tokenCnt': num_tokens})
+        incoming_logger.info('TokensUsed', extra={'tokenCnt': num_tokens})
 
-        logger.info('MessageInfo', extra= {'channel_id': channel_id, 
+        incoming_logger.info('MessageInfo', extra= {'channel_id': channel_id, 
                                            'user': user.username, 
-                                           'email': user.email, 
-                                           'message': messages})
+                                           'email': user.email})
+        incoming_logger.info(messages)
 
         openai_response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
