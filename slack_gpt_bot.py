@@ -132,7 +132,7 @@ def command_handler(body, context):
             channel_id=channel_id, 
             user=user.username, 
             email=user.email, 
-            response=response_text
+            response=response_text[1]
         )
  
         json_std_logger.info('ResponseInfo')
