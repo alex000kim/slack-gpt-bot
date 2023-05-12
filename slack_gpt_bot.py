@@ -90,8 +90,12 @@ def command_handler(body, context):
         
         logger.info({'message': 'TokensUsed', 'tokenCnt': num_tokens})
 
-        logger.info({'message': 'MessageInfo', 'channel_id': channel_id, 'user': user.username, 'email': user.email})
-        logger.info(messages)
+        logger.info({'message': 'MessageInfo', 
+                     'channel_id': channel_id, 
+                     'user': user.username, 
+                     'email': user.email, 
+                     'request': messages})
+        # logger.info(messages)
 
         openai_response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -102,7 +106,6 @@ def command_handler(body, context):
         
         response_text = ""
         ii = 0
-        # outgoing_logger.info(f'Channel ID:{channel_id}:, User: {user.username}, message: {messages}')
         for chunk in openai_response:
             if chunk.choices[0].delta.get('content'):
                 ii = ii + 1
@@ -114,6 +117,11 @@ def command_handler(body, context):
             elif chunk.choices[0].finish_reason == 'stop':
                 # outgoing_logger.info(f'response: {response_text}')
                 update_chat(app, channel_id, reply_message_ts, response_text)
+        logger.info({'message': 'ResponseInfo', 
+                     'channel_id': channel_id, 
+                     'user': user.username, 
+                     'email': user.email, 
+                     'response': response_text})   
     except Exception as e:
         print(f"Error: {e}")
         app.client.chat_postMessage(
