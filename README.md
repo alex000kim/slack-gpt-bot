@@ -4,8 +4,21 @@ This repo was forked from here https://github.com/alex000kim/slack-gpt-bot origi
 ## Changes specific to Cipher
 Additional logging components have been added for compliance purposes to track all user info across inputs & outputs.
 
+## Building the bot 
+Build the container
+```
+docker . -t slack-gpt-bot
+```
+Tag it for the GCR
+```
+docker tag slack-gpt-bot us.gcr.io/PROJECT_ID/slack-gpt-bot:TAG
+```
+Push to the GCR
+```
+docker push us.gcr.io/PROJECT_ID/slack-gpt-bot:TAG
+``` 
 ## Deploying the bot
-The bot leverages sockets which do not play nice with CloudRun, as such it is to be deployed as a container to GCE directly. 
+The bot leverages sockets which do not play nice with CloudRun, as such it is to be deployed as a container to GCE directly.
 
 
 # Slack GPT Bot
