@@ -3,11 +3,28 @@ This repo was forked from here https://github.com/alex000kim/slack-gpt-bot origi
 
 ## Changes specific to Cipher
 Additional logging components have been added for compliance purposes to track all user info across inputs & outputs.
+## Features
+- Extract URLs from user messages
+- Scrape webpage content from URLs
+- Integrate with OpenAI's GPT-4 to answer questions
+- Maintain conversation context in a threaded format
+- Socket mode integration with Slack
+## Dependencies
+- Python 3.6 or later
+- beautifulsoup4
+- slack-bolt
+- slack-sdk
+- openai
+- requests
+- json-logger-stdout
+- python-dotenv
+
+See `requirements.txt`.
 
 ## Building the bot 
 Build the container
 ```
-docker . -t slack-gpt-bot
+docker build . -t slack-gpt-bot
 ```
 Tag it for the GCR
 ```
@@ -23,22 +40,6 @@ The bot leverages sockets which do not play nice with CloudRun, as such it is to
 
 # Slack GPT Bot
 This repository contains a Python-based Slack GPT Bot that uses OpenAI's GPT model to answer users' questions. Additionally, the bot can extract content from URLs provided in the user's message and take into account their content in its response.
-
-## Features
-- Extract URLs from user messages
-- Scrape webpage content from URLs
-- Integrate with OpenAI's GPT-4 to answer questions
-- Maintain conversation context in a threaded format
-- Socket mode integration with Slack
-## Dependencies
-- Python 3.6 or later
-- beautifulsoup4
-- slack-bolt
-- slack-sdk
-- openai
-- requests
-
-See `requirements.txt`.
 
 ## Installation
 1. Clone this repository:
