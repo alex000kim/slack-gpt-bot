@@ -1,7 +1,7 @@
 import openai
 import os
 import logging
-from json_logger_stdout import JSONLoggerStdout
+from json_logger_stdout import json_std_logger
 from dotenv import load_dotenv
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
@@ -20,9 +20,9 @@ from collections import namedtuple
 # outgoing_handler.setFormatter(formatter)
 # outgoing_logger.addHandler(outgoing_handler)
 
-logger = JSONLoggerStdout(
-    service="slack-gpt-bot"
-)
+# logger = JSONLoggerStdout(
+#     service="slack-gpt-bot"
+# )
 
 load_dotenv()
 
@@ -68,7 +68,11 @@ def build_personalized_wait_message(first_name):
 @app.event("app_mention")
 def command_handler(body, context):
     try:
-        logger.debug({'message': 'arguments','body': body, 'context': context})
+        json_std_logger._setParams(
+            body=body,
+            context=context
+        )
+        json_std_logger.debug('arguments') 
 
         channel_id = body['event']['channel']
         thread_ts = body['event'].get('thread_ts', body['event']['ts'])
@@ -88,14 +92,20 @@ def command_handler(body, context):
         messages = process_conversation_history(conversation_history, bot_user_id)
         num_tokens = num_tokens_from_messages(messages)
         
-        logger.info({'message': 'TokensUsed', 'tokenCnt': num_tokens})
+        json_std_logger._setParams(
+            token_count=num_tokens
+        )
+        json_std_logger.info('TokensUsed') 
 
-        logger.info({'message': 'MessageInfo', 
-                     'channel_id': channel_id, 
-                     'user': user.username, 
-                     'email': user.email, 
-                     'request': messages})
-        # logger.info(messages)
+        # logger.info({'event': 'TokensUsed', 'tokenCnt': num_tokens})
+
+        json_std_logger._setParams(
+            channel_id=channel_id, 
+            user=user.username, 
+            email=user.email, 
+            request=messages
+        )
+        json_std_logger.info('MessageInfo')
 
         openai_response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -117,11 +127,21 @@ def command_handler(body, context):
             elif chunk.choices[0].finish_reason == 'stop':
                 # outgoing_logger.info(f'response: {response_text}')
                 update_chat(app, channel_id, reply_message_ts, response_text)
-        logger.info({'message': 'ResponseInfo', 
-                     'channel_id': channel_id, 
-                     'user': user.username, 
-                     'email': user.email, 
-                     'response': response_text})   
+
+        json_std_logger._setParams(
+            channel_id=channel_id, 
+            user=user.username, 
+            email=user.email, 
+            response=response_text
+        )
+ 
+        json_std_logger.info('ResponseInfo')
+
+        # logger.info({'event': 'ResponseInfo', 
+        #              'channel_id': channel_id, 
+        #              'user': user.username, 
+        #              'email': user.email, 
+        #              'response': response_text})   
     except Exception as e:
         print(f"Error: {e}")
         app.client.chat_postMessage(
