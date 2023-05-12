@@ -61,6 +61,14 @@ def command_handler(body, context):
 
         user = get_user_information(user_id)
 
+        if channel_id != 'C055BE20JJF': #lock to test channel for beta, currently using chris-gpt-test ID
+            slack_resp = app.client.chat_postMessage( 
+                channel=channel_id,
+                thread_ts=thread_ts,
+                text="Our apologies, however the Beta ChatGPT bot is not allowed outside of Beta channel"
+            )
+            return
+
         slack_resp = app.client.chat_postMessage(
             channel=channel_id,
             thread_ts=thread_ts,

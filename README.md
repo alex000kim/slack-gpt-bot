@@ -1,35 +1,15 @@
 # CipherHealth Internal Slack GPT Bot
-This repo was forked from here https://github.com/alex000kim/slack-gpt-bot original Readme available below. 
+This repo was forked from https://github.com/alex000kim/slack-gpt-bot 
 
 ## Changes specific to Cipher
 Additional logging components have been added for compliance purposes to track all user info across inputs & outputs.
-
-## Building the bot 
-Build the container
-```
-docker . -t slack-gpt-bot
-```
-Tag it for the GCR
-```
-docker tag slack-gpt-bot us.gcr.io/PROJECT_ID/slack-gpt-bot:TAG
-```
-Push to the GCR
-```
-docker push us.gcr.io/PROJECT_ID/slack-gpt-bot:TAG
-``` 
-## Deploying the bot
-The bot leverages sockets which do not play nice with CloudRun, as such it is to be deployed as a container to GCE directly.
-
-
-# Slack GPT Bot
-This repository contains a Python-based Slack GPT Bot that uses OpenAI's GPT model to answer users' questions. Additionally, the bot can extract content from URLs provided in the user's message and take into account their content in its response.
-
 ## Features
 - Extract URLs from user messages
 - Scrape webpage content from URLs
 - Integrate with OpenAI's GPT-4 to answer questions
 - Maintain conversation context in a threaded format
-- Socket mode integration with Slack
+- Socket mode integration with SlackA
+- Logs all inputs, outputs, user names, and emails to structured json payload which is compatible with GCP Logging
 ## Dependencies
 - Python 3.6 or later
 - beautifulsoup4
@@ -37,8 +17,42 @@ This repository contains a Python-based Slack GPT Bot that uses OpenAI's GPT mod
 - slack-sdk
 - openai
 - requests
+- json-logger-stdout
+- python-dotenv
 
 See `requirements.txt`.
+
+## Building the bot 
+Build the container
+```
+docker build . -t slack-gpt-bot
+```
+Tag it for the GCR (Generic example)
+```
+docker tag slack-gpt-bot us.gcr.io/PROJECT_ID/slack-gpt-bot:TAG
+```
+Tag it for the GCR (Beta test actuals)
+```
+docker tag slack-gpt-bot us.gcr.io/qaload-track-atlas-ch-e4e9/slack-gpt-bot:latest
+```
+Push to the GCR (Generic example)
+```
+docker push us.gcr.io/PROJECT_ID/slack-gpt-bot:TAG
+``` 
+Push to the GCR (Beta test actuals)
+```
+docker push us.gcr.io/qaload-track-atlas-ch-e4e9/slack-gpt-bot:latest
+```
+## Deploying the bot
+The bot leverages sockets which do not play nice with CloudRun, as such it is to be deployed as a container to GCE directly.
+For now, this bot is just for beta testing and should be deployed the following way.  This replaces an existing GCP instance
+running managed container OS with the latest tag.  It will stop the instance, pull the new image and start. 
+```
+gcloud compute instances update-container slack-gpt-bot-vm --container-image us.gcr.io/qaload-track-atlas-ch-e4e9/slack-gpt-bot:latest
+```
+
+# Slack GPT Bot
+This repository contains a Python-based Slack GPT Bot that uses OpenAI's GPT model to answer users' questions. Additionally, the bot can extract content from URLs provided in the user's message and take into account their content in its response.
 
 ## Installation
 1. Clone this repository:
