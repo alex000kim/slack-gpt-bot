@@ -106,7 +106,7 @@ def command_handler(body, context):
             channel_id=channel_id, 
             user=user.username, 
             email=user.email,
-            request=messages,
+            request=messages[1:],
             response=response_text
         )
         json_std_logger.info('RequestResponse')
