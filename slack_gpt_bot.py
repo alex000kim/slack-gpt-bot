@@ -1,28 +1,10 @@
 import openai
 import os
-import logging
 from json_logger_stdout import json_std_logger
 from dotenv import load_dotenv
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from collections import namedtuple
-
-# Set up logging
-# formatter = json_log_formatter.JSONFormatter()
-# incoming_handler = logging.FileHandler('incoming.log')
-# incoming_handler.setFormatter(formatter)
-# incoming_logger = logging.getLogger('incoming-slack')
-# incoming_logger.addHandler(incoming_handler)
-# incoming_logger.setLevel(logging.INFO)
-
-# outgoing_logger = logging.getLogger('outgoing')
-# outgoing_handler = logging.FileHandler('outgoing.log')
-# outgoing_handler.setFormatter(formatter)
-# outgoing_logger.addHandler(outgoing_handler)
-
-# logger = JSONLoggerStdout(
-#     service="slack-gpt-bot"
-# )
 
 load_dotenv()
 
@@ -38,14 +20,12 @@ from utils import (N_CHUNKS_TO_CONCAT_BEFORE_UPDATING, OPENAI_API_KEY,
 app = App(token=SLACK_BOT_TOKEN)
 openai.api_key = OPENAI_API_KEY
 
-
 def get_conversation_history(channel_id, thread_ts):
     return app.client.conversations_replies(
         channel=channel_id,
         ts=thread_ts,
         inclusive=True
     )
-
 
 User = namedtuple('User', ('username', 'display_name', 'first_name', 'last_name', 'email'))
 '''
@@ -100,21 +80,6 @@ def command_handler(body, context):
         messages = process_conversation_history(conversation_history, bot_user_id)
         num_tokens = num_tokens_from_messages(messages)
         
-        json_std_logger._setParams(
-            token_count=num_tokens
-        )
-        json_std_logger.info('TokensUsed') 
-
-        # logger.info({'event': 'TokensUsed', 'tokenCnt': num_tokens})
-
-        json_std_logger._setParams(
-            channel_id=channel_id, 
-            user=user.username, 
-            email=user.email, 
-            request=messages[1:]
-        )
-        json_std_logger.info('MessageInfo')
-
         openai_response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=messages,
@@ -137,19 +102,15 @@ def command_handler(body, context):
                 update_chat(app, channel_id, reply_message_ts, response_text)
 
         json_std_logger._setParams(
+            token_count=num_tokens,
             channel_id=channel_id, 
             user=user.username, 
-            email=user.email, 
+            email=user.email,
+            request=messages,
             response=response_text
         )
- 
-        json_std_logger.info('ResponseInfo')
-
-        # logger.info({'event': 'ResponseInfo', 
-        #              'channel_id': channel_id, 
-        #              'user': user.username, 
-        #              'email': user.email, 
-        #              'response': response_text})   
+        json_std_logger.info('RequestResponse')
+    
     except Exception as e:
         print(f"Error: {e}")
         app.client.chat_postMessage(
