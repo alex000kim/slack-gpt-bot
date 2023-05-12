@@ -37,12 +37,9 @@ Push to the GCR (Generic example)
 docker push us.gcr.io/PROJECT_ID/slack-gpt-bot:TAG
 ``` 
 **Beta Specifics**
-Tag it for the GCR
+
 ```
 docker tag slack-gpt-bot us.gcr.io/qaload-track-atlas-ch-e4e9/slack-gpt-bot:latest
-```
-Push to the GCR
-```
 docker push us.gcr.io/qaload-track-atlas-ch-e4e9/slack-gpt-bot:latest
 ```
 ## Deploying the bot
@@ -58,6 +55,7 @@ OPENAI_API_KEY=your_openai_api_key
 ```
 
 **Beta Specifics**
+
 For now, this bot is just for beta testing and should be deployed the following way.  This replaces an existing GCP instance
 running managed container OS with the latest tag.  It will stop the instance, pull the new image and start.
 ```
