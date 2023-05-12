@@ -1,5 +1,5 @@
 # CipherHealth Internal Slack GPT Bot
-This repo was forked from https://github.com/alex000kim/slack-gpt-bot 
+This repo was forked from https://github.com/alex000kim/slack-gpt-bot and contains a Python-based Slack GPT Bot that uses OpenAI's GPT model to answer users' questions. Additionally, the bot can extract content from URLs provided in the user's message and take into account their content in its response.
 
 ## Changes specific to Cipher
 Additional logging components have been added for compliance purposes to track all user info across inputs & outputs.
@@ -22,8 +22,9 @@ Additional logging components have been added for compliance purposes to track a
 
 See `requirements.txt`.
 
+# Installation
 ## Building the bot 
-Build the container
+Build the container (generic)
 ```
 docker build . -t slack-gpt-bot
 ```
@@ -31,49 +32,38 @@ Tag it for the GCR (Generic example)
 ```
 docker tag slack-gpt-bot us.gcr.io/PROJECT_ID/slack-gpt-bot:TAG
 ```
-Tag it for the GCR (Beta test actuals)
-```
-docker tag slack-gpt-bot us.gcr.io/qaload-track-atlas-ch-e4e9/slack-gpt-bot:latest
-```
 Push to the GCR (Generic example)
 ```
 docker push us.gcr.io/PROJECT_ID/slack-gpt-bot:TAG
 ``` 
-Push to the GCR (Beta test actuals)
+***Beta Specifics***
+
 ```
+docker build . -t slack-gpt-bot
+docker tag slack-gpt-bot us.gcr.io/qaload-track-atlas-ch-e4e9/slack-gpt-bot:latest
 docker push us.gcr.io/qaload-track-atlas-ch-e4e9/slack-gpt-bot:latest
 ```
 ## Deploying the bot
 The bot leverages sockets which do not play nice with CloudRun, as such it is to be deployed as a container to GCE directly.
-For now, this bot is just for beta testing and should be deployed the following way.  This replaces an existing GCP instance
-running managed container OS with the latest tag.  It will stop the instance, pull the new image and start. 
-```
-gcloud compute instances update-container slack-gpt-bot-vm --container-image us.gcr.io/qaload-track-atlas-ch-e4e9/slack-gpt-bot:latest
-```
 
-# Slack GPT Bot
-This repository contains a Python-based Slack GPT Bot that uses OpenAI's GPT model to answer users' questions. Additionally, the bot can extract content from URLs provided in the user's message and take into account their content in its response.
+Deploy the container to a GCE compute instance https://cloud.google.com/compute/docs/containers/deploying-containers#gcloud_1
 
-## Installation
-1. Clone this repository:
-
-```bash
-git clone https://github.com/alex000kim/slack-gpt-bot.git
-cd slack-gpt-bot
-```
-2. Install the required packages:
-
-```bash
-pip install -r requirements.txt
-```
-3. Create a .env file in the root directory of the project and add your Slack and OpenAI API keys:
+Mandatory environment variables are:
 
 ```bash
 SLACK_BOT_TOKEN=your_slack_bot_token
 SLACK_APP_TOKEN=your_slack_app_token
 OPENAI_API_KEY=your_openai_api_key
 ```
-See below how to get those.
+These must be configured in Slack and you must have an OpenAI key. 
+
+***Beta Specifics***
+
+For now, this bot is just for beta testing and should be deployed the following way.  This replaces an existing GCP instance
+running managed container OS with the latest tag.  It will stop the instance, pull the new image and start.
+```
+gcloud compute instances update-container slack-gpt-bot-vm --container-image us.gcr.io/qaload-track-atlas-ch-e4e9/slack-gpt-bot:latest
+```
 
 
 ## Configuring Permissions in Slack
@@ -101,3 +91,13 @@ python slack_gpt_bot.py
 ## Example
 Note: The cutoff date of GPT-4 knowledge is Sep 2021, bit scikit-learn v1.2 was released in Dec 2022
 ![example](examples/gpt-bot-example-1.png)
+
+## Troubleshooting
+If you have issues pushing the image to the GCR, its likely a permission issue, you can try re-authenticating with GCP
+and fixing the docker config like so:
+```
+gcloud auth login
+gcloud config set project qaload-track-atlas-ch-e4e9
+gcloud auth configure-docker
+```
+
